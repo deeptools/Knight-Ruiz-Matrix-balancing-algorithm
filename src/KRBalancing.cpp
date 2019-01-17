@@ -25,34 +25,17 @@ using SparseMatrixR = Eigen::SparseMatrix<double,Eigen::RowMajor>;
 
 class kr_balancing{
      public:
-      // kr_balancing(std::vector<std::vector<double> > & input_matrix){
-      //   A.resize(input_matrix.size(), input_matrix[0].size());
-      //   for (int i = 0; i < input_matrix.size(); ++i){ //TODO how to avoid this for loop?!
-      //       A.row(i) = Eigen::VectorXd::Map(&input_matrix[i][0], input_matrix[0].size());
-      //   }
-      //   e.resize(A.rows());
-      //   e.setOnes();
-      //   x0 = e;
-      // }
+
       kr_balancing(const SparseMatrixR & input){
+        std::cout<< "read input"<<std::endl;
         SparseMatrixR temp = input;
         A = Eigen::MatrixXd(temp);
-        A = (A.array() + 0.1).matrix();
+        A = (A.array() + 0.00001).matrix();
         e.resize(A.rows());
         e.setOnes();
         x0 = e;
-        std::cout << A <<std::endl;
       }
-      // void create(const SparseMatrixR & input){
-      //   SparseMatrixR temp = input;
-      //   A = Eigen::MatrixXd(temp);
-      //   A = (A.array() + 0.00001).matrix();
-      //   e.resize(A.rows());
-      //   e.setOnes();
-      //   x0 = e;
-      //   std::cout << A <<std::endl;
-      //   outter_loop();
-    //  }
+
       void outter_loop(){
         double stop_tol = tol*0.5;
         double eta = etamax;
@@ -69,10 +52,8 @@ class kr_balancing{
           i=i+1; k=0; y=e;
           innertol = std::max(std::pow(eta,2)*rout,rt);
           inner_loop();
-          //std::cout << A <<std::endl;
 
           x=x.cwiseProduct(y);
-  //        std::cout << x << std::endl;
 
           v=x.cwiseProduct(A*x);
           rk = Eigen::VectorXd::Constant(v.rows(),1) - v;
@@ -90,22 +71,17 @@ class kr_balancing{
             res.push_back(res_norm);
           }
          }
-         std::cout << "output"<<std::endl;
-         std::cout << A <<std::endl;
-         std::cout << x <<std::endl;
+         std::cout << "export output"<<std::endl;
+
 
          Eigen::MatrixXd Ax = A.array().colwise() * x.array();
          xTAx = Ax.array().rowwise() * x.transpose().array();
-         std::cout << xTAx <<std::endl;
-      //   const static Eigen::IOFormat tsvFormat(-2, 1, "\t","\n");
-      //   std::ofstream file("output.tsv");
-      //   file << xTAx.format(tsvFormat);
+
       }
       void inner_loop(){
         while (rho_km1(0) > innertol){ // Inner itteration (conjugate gradient method)
           k++;
           if(k == 1){
-            //Eigen::VectorXd Z = rk.cwiseProduct(v. cwiseInverse());
             Z = rk.cwiseQuotient(v);
             p=Z;
             rho_km1 = rk.conjugate().transpose()*Z;
@@ -148,8 +124,6 @@ class kr_balancing{
             y = y + gamma*ap;
             break;
           }
-          std::cout << rho_km2 << std::endl;
-          std::cout << rk << std::endl;
 
           y = ynew;
           rk = rk - (alpha*w); rho_km2 = rho_km1;
@@ -158,6 +132,8 @@ class kr_balancing{
         }//End of the inner 'while'
       }
       const Eigen::MatrixXd & get_output(){
+        //Eigen::SparseMatrix<double> temp_out = xTAx.sparseView();
+        //std::cout << temp_out <<std::endl;
         return xTAx;
       }
      private:
