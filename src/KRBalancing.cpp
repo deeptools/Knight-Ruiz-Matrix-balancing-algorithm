@@ -16,21 +16,43 @@
 #include <map>
 #include <math.h>
 #include <algorithm>
+#include <Eigen/Sparse>
 #include <Eigen/Dense>
 #include <limits>
 namespace py = pybind11;
+using SparseMatrixR = Eigen::SparseMatrix<double,Eigen::RowMajor>;
+
 
 class kr_balancing{
      public:
-      kr_balancing(std::vector<std::vector<double> > & input_matrix){
-        A.resize(input_matrix.size(), input_matrix[0].size());
-        for (int i = 0; i < input_matrix.size(); ++i){ //TODO how to avoid this for loop?!
-            A.row(i) = Eigen::VectorXd::Map(&input_matrix[i][0], input_matrix[0].size());
-        }
+      // kr_balancing(std::vector<std::vector<double> > & input_matrix){
+      //   A.resize(input_matrix.size(), input_matrix[0].size());
+      //   for (int i = 0; i < input_matrix.size(); ++i){ //TODO how to avoid this for loop?!
+      //       A.row(i) = Eigen::VectorXd::Map(&input_matrix[i][0], input_matrix[0].size());
+      //   }
+      //   e.resize(A.rows());
+      //   e.setOnes();
+      //   x0 = e;
+      // }
+      kr_balancing(const SparseMatrixR & input){
+        SparseMatrixR temp = input;
+        A = Eigen::MatrixXd(temp);
+        A = (A.array() + 0.1).matrix();
         e.resize(A.rows());
         e.setOnes();
         x0 = e;
+        std::cout << A <<std::endl;
       }
+      // void create(const SparseMatrixR & input){
+      //   SparseMatrixR temp = input;
+      //   A = Eigen::MatrixXd(temp);
+      //   A = (A.array() + 0.00001).matrix();
+      //   e.resize(A.rows());
+      //   e.setOnes();
+      //   x0 = e;
+      //   std::cout << A <<std::endl;
+      //   outter_loop();
+    //  }
       void outter_loop(){
         double stop_tol = tol*0.5;
         double eta = etamax;
@@ -47,7 +69,11 @@ class kr_balancing{
           i=i+1; k=0; y=e;
           innertol = std::max(std::pow(eta,2)*rout,rt);
           inner_loop();
+          //std::cout << A <<std::endl;
+
           x=x.cwiseProduct(y);
+  //        std::cout << x << std::endl;
+
           v=x.cwiseProduct(A*x);
           rk = Eigen::VectorXd::Constant(v.rows(),1) - v;
           rho_km1 = rk.conjugate().transpose()*rk;
@@ -65,8 +91,12 @@ class kr_balancing{
           }
          }
          std::cout << "output"<<std::endl;
+         std::cout << A <<std::endl;
+         std::cout << x <<std::endl;
+
          Eigen::MatrixXd Ax = A.array().colwise() * x.array();
          xTAx = Ax.array().rowwise() * x.transpose().array();
+         std::cout << xTAx <<std::endl;
       //   const static Eigen::IOFormat tsvFormat(-2, 1, "\t","\n");
       //   std::ofstream file("output.tsv");
       //   file << xTAx.format(tsvFormat);
@@ -118,6 +148,8 @@ class kr_balancing{
             y = y + gamma*ap;
             break;
           }
+          std::cout << rho_km2 << std::endl;
+          std::cout << rk << std::endl;
 
           y = ynew;
           rk = rk - (alpha*w); rho_km2 = rho_km1;
@@ -159,7 +191,8 @@ class kr_balancing{
 PYBIND11_MODULE(KRBalancing, m) {
   py::class_<kr_balancing>(m, "kr_balancing")
   //.def_buffer([](kr_balancing &m));
-    .def(py::init<std::vector<std::vector<double> >& >())
+    .def(py::init< const SparseMatrixR & >())
+  //  .def("create", &kr_balancing::create)
     .def("outter_loop", &kr_balancing::outter_loop)
     .def("get_output",&kr_balancing::get_output, py::return_value_policy::reference_internal);
   //   return py::array(xTAx.size(), xTAx.data());
