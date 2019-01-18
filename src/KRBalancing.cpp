@@ -28,11 +28,15 @@ class kr_balancing{
 
       kr_balancing(const SparseMatrixR & input){
         std::cout<< "read input"<<std::endl;
-        SparseMatrixR temp = input;
-        A = Eigen::MatrixXd(temp);
-        A = (A.array() + 0.00001).matrix();
+        A = input;
         e.resize(A.rows());
         e.setOnes();
+        /*Replace zeros with 0.00001 on the main diagonal*/
+        SparseMatrixR I;
+        I.resize(A.rows(),A.cols());
+        I.setIdentity();
+        I = I*0.00001;
+        A = A + I;
         x0 = e;
       }
 
@@ -74,8 +78,10 @@ class kr_balancing{
          std::cout << "export output"<<std::endl;
 
 
-         Eigen::MatrixXd Ax = A.array().colwise() * x.array();
-         xTAx = Ax.array().rowwise() * x.transpose().array();
+      //   Eigen::MatrixXd Ax = A.array().colwise() * x.array();
+      //   xTAx = Ax.array().rowwise() * x.transpose().array();
+         xTAx = x.asDiagonal()*A*x.asDiagonal();
+
 
       }
       void inner_loop(){
@@ -133,7 +139,6 @@ class kr_balancing{
       }
       const Eigen::MatrixXd & get_output(){
         //Eigen::SparseMatrix<double> temp_out = xTAx.sparseView();
-        //std::cout << temp_out <<std::endl;
         return xTAx;
       }
      private:
@@ -146,7 +151,7 @@ class kr_balancing{
        double etamax = 0.1;
        Eigen::VectorXd x0;
        Eigen::VectorXd e;
-       Eigen::MatrixXd A;
+       SparseMatrixR A;
        Eigen::VectorXd rho_km1;
        Eigen::VectorXd rho_km2;
        unsigned int k;
