@@ -138,7 +138,6 @@ class kr_balancing{
         }//End of the inner 'while'
       }
       const Eigen::MatrixXd & get_output(){
-        //Eigen::SparseMatrix<double> temp_out = xTAx.sparseView();
         return xTAx;
       }
      private:
@@ -171,15 +170,10 @@ class kr_balancing{
 
 PYBIND11_MODULE(KRBalancing, m) {
   py::class_<kr_balancing>(m, "kr_balancing")
-  //.def_buffer([](kr_balancing &m));
     .def(py::init< const SparseMatrixR & >())
-  //  .def("create", &kr_balancing::create)
     .def("outter_loop", &kr_balancing::outter_loop)
     .def("get_output",&kr_balancing::get_output, py::return_value_policy::reference_internal);
-  //   return py::array(xTAx.size(), xTAx.data());
-    //m.doc() = "pybind11 example plugin"; // optional module docstring
 
-    //m.def("add", &add, "A function which adds two numbers");
 }
 
-//c++ -O3 -Wall -I . -shared -std=c++11 -fPIC $(python3 -m pybind11 --includes) KRBalancing.cpp -o KRBalancing$(python3-config --extension-suffix)
+//c++ -O3 -Wall -I /path/to/eigen -shared -std=c++11 -fPIC $(python3 -m pybind11 --includes) KRBalancing.cpp -o KRBalancing$(python3-config --extension-suffix)
