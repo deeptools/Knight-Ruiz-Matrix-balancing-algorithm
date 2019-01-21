@@ -136,9 +136,11 @@ class kr_balancing{
 
         }//End of the inner 'while'
       }
-      SparseMatrixR  get_output(){
-        std::cout << "export output of shape "<< A.cwiseProduct(x*x.transpose()).rows() <<std::endl;
-        return A.cwiseProduct(x*x.transpose());
+      const SparseMatrixR* get_output(){
+        output = A.cwiseProduct(x*x.transpose());
+        std::cout << "export output of shape "<< output.rows() <<
+        " by " << output.rows()<<std::endl;
+        return &output;
       }
      private:
        std::vector<double> res;
@@ -163,6 +165,7 @@ class kr_balancing{
        SparseMatrixR v;
        SparseMatrixR x;
        Eigen::SparseVector<double> rk;
+       SparseMatrixR output;
 };
 
 
