@@ -3,20 +3,15 @@ from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import sys
 import setuptools
+from sysconfig import get_config_var, get_paths
+
 
 __version__ = '0.0.0'
 
-
-class get_eigen_include(object):
-    """Includes eigen3 path """
-
-    def __init__(self, user=False):
-        self.user = user
-
-    def __str__(self):
-        import eigen3
-        return eigen3.get_include(self.user)
-
+def get_include(): #TODO 
+	info = get_paths()
+	Eigen_path = info['include']+'/../eigen3'
+	return Eigen_path      
 
 KR_module = [
     Extension(
@@ -24,8 +19,7 @@ KR_module = [
         ['src/KRBalancing.cpp'],
         include_dirs=[
             # Path to eigen3 headers
-            get_eigen_include(),
-            get_eigen_include(user=True)
+            get_include(),
         ],
         language='c++'
     ),
