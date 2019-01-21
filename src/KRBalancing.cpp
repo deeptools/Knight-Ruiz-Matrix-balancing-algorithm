@@ -16,11 +16,11 @@
 #include <map>
 #include <math.h>
 #include <algorithm>
-#include <Eigen/Sparse>
-#include <Eigen/Dense>
+//#include <Eigen/Sparse>
+//#include <Eigen/Dense>
 #include <limits>
 namespace py = pybind11;
-using SparseMatrixR = Eigen::SparseMatrix<double,Eigen::RowMajor>;
+using SparseMatrixR = Eigen::SparseMatrix<double,Eigen::ColMajor>;
 
 
 class kr_balancing{
@@ -29,7 +29,7 @@ class kr_balancing{
       kr_balancing(const SparseMatrixR & input){
         std::cout<< "read input"<<std::endl;
         A = input;
-        e.resize(A.rows());
+        e.resize(A.rows(),1);
         e.setOnes();
         /*Replace zeros with 0.00001 on the main diagonal*/
         SparseMatrixR I;
@@ -37,9 +37,9 @@ class kr_balancing{
         I.setIdentity();
         I = I*0.00001;
         A = A + I;
-        x0 = e;
+        x0 = e.sparseView();
       }
-
+      size_t outter_loop_count = 0;
       void outter_loop(){
         double stop_tol = tol*0.5;
         double eta = etamax;
@@ -49,11 +49,12 @@ class kr_balancing{
         rk = Eigen::VectorXd::Constant(v.rows(),1) - v; //Vecotr of 1 - v
         rho_km1 = rk.conjugate().transpose()*rk;
         rho_km2 = rho_km1;
-        double rout = rho_km1(0);
+        double rout = rho_km1.coeff(0,0);
         double rold = rout;
         if(fl == 1) std::cout<< 'intermediate convergence statistics is off'<<std::endl;
         while(rout > rt){//outer itteration
-          i=i+1; k=0; y=e;
+          outter_loop_count ++;
+          i=i+1; k=0; y=e.sparseView();
           innertol = std::max(std::pow(eta,2)*rout,rt);
           inner_loop();
 
@@ -62,7 +63,7 @@ class kr_balancing{
           v=x.cwiseProduct(A*x);
           rk = Eigen::VectorXd::Constant(v.rows(),1) - v;
           rho_km1 = rk.conjugate().transpose()*rk;
-          rout = rho_km1(0);
+          rout = rho_km1.coeff(0,0);
           MVP = MVP + k + 1;
           //Update inner iteration stopping criterion.
           double rat = rout/rold; rold = rout; double res_norm = std::sqrt(rout);
@@ -74,18 +75,13 @@ class kr_balancing{
           if(fl == 1){
             res.push_back(res_norm);
           }
+          if(outter_loop_count %50 ==0) std::cout << "outer loop number "<< outter_loop_count <<std::endl;
          }
-         std::cout << "export output"<<std::endl;
-
-
-      //   Eigen::MatrixXd Ax = A.array().colwise() * x.array();
-      //   xTAx = Ax.array().rowwise() * x.transpose().array();
-         xTAx = x.asDiagonal()*A*x.asDiagonal();
-
-
       }
       void inner_loop(){
-        while (rho_km1(0) > innertol){ // Inner itteration (conjugate gradient method)
+        size_t inner_loop_count = 0;
+        while (rho_km1.coeff(0,0) > innertol){ // Inner itteration (conjugate gradient method)
+          inner_loop_count ++;
           k++;
           if(k == 1){
             Z = rk.cwiseQuotient(v);
@@ -97,8 +93,9 @@ class kr_balancing{
 
           }
           //Update search direction efficiently.
-          Eigen::VectorXd w=x.cwiseProduct(A*(x.cwiseProduct(p))) + v.cwiseProduct(p);
-          double alpha = rho_km1.cwiseQuotient(p.conjugate().transpose()*w)(0);
+          SparseMatrixR w=x.cwiseProduct(A*(x.cwiseProduct(p))) + v.cwiseProduct(p);
+          SparseMatrixR alpha_mat = rho_km1.cwiseQuotient(p.conjugate().transpose()*w);
+          double alpha = alpha_mat.coeff(0,0);
           Eigen::VectorXd ap = alpha * p;
           //Test distance to boundary of cone.
           Eigen::VectorXd ynew = y + ap;
@@ -134,11 +131,14 @@ class kr_balancing{
           y = ynew;
           rk = rk - (alpha*w); rho_km2 = rho_km1;
           Z = rk.cwiseQuotient(v); rho_km1 = rk.conjugate().transpose()*Z;
+          if(inner_loop_count %100 ==0) std::cout << "inner loop number "<< inner_loop_count <<std::endl;
+
 
         }//End of the inner 'while'
       }
-      const Eigen::MatrixXd & get_output(){
-        return xTAx;
+      SparseMatrixR  get_output(){
+        std::cout << "export output"<<std::endl;
+        return A.cwiseProduct(x*x.transpose());
       }
      private:
        std::vector<double> res;
@@ -148,23 +148,21 @@ class kr_balancing{
        double tol = 1e-6;
        double g = 0.9;
        double etamax = 0.1;
-       Eigen::VectorXd x0;
-       Eigen::VectorXd e;
+       SparseMatrixR x0;
+       Eigen::MatrixXd e;
        SparseMatrixR A;
-       Eigen::VectorXd rho_km1;
-       Eigen::VectorXd rho_km2;
+       SparseMatrixR rho_km1;
+       SparseMatrixR rho_km2;
        unsigned int k;
        Eigen::VectorXd y;
-       Eigen::VectorXd p;
-       Eigen::VectorXd Z;
+       SparseMatrixR p;
+       SparseMatrixR Z;
        double innertol;
        unsigned int i = 0; //Outer itteration count
        unsigned int MVP = 0;
-       Eigen::VectorXd v;
-       Eigen::VectorXd x;
-       Eigen::VectorXd rk;
-       //Output:
-       Eigen::MatrixXd xTAx;
+       SparseMatrixR v;
+       SparseMatrixR x;
+       Eigen::SparseVector<double> rk;
 };
 
 
