@@ -7,18 +7,15 @@ import setuptools
 __version__ = '0.0.0'
 
 
-class get_pybind_include(object):
-    """Helper class to determine the pybind11 include path
-    The purpose of this class is to postpone importing pybind11
-    until it is actually installed, so that the ``get_include()``
-    method can be invoked. """
+class get_eigen_include(object):
+    """Includes eigen3 path """
 
     def __init__(self, user=False):
         self.user = user
 
     def __str__(self):
-        import pybind11
-        return pybind11.get_include(self.user)
+        import eigen3
+        return eigen3.get_include(self.user)
 
 
 KR_module = [
@@ -26,10 +23,9 @@ KR_module = [
         'KRBalancing',
         ['src/KRBalancing.cpp'],
         include_dirs=[
-            '.',
-            # Path to pybind11 headers
-            get_pybind_include(),
-            get_pybind_include(user=True)
+            # Path to eigen3 headers
+            get_eigen_include(),
+            get_eigen_include(user=True)
         ],
         language='c++'
     ),
