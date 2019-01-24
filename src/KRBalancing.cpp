@@ -16,37 +16,39 @@
 #include <map>
 #include <math.h>
 #include <algorithm>
-//#include <Eigen/Sparse>
-//#include <Eigen/Dense>
+#include <omp.h>
 #include <limits>
 namespace py = pybind11;
-using SparseMatrixR = Eigen::SparseMatrix<double,Eigen::ColMajor>;
-
+using SparseMatrixCol = Eigen::SparseMatrix<double,Eigen::ColMajor>;
+size_t num_threads = 10; //TODO add it as an argument to be set by user
 
 class kr_balancing{
      public:
 
-      kr_balancing(const SparseMatrixR & input){
+      kr_balancing(const  SparseMatrixCol & input){
         std::cout<< "read input"<<std::endl;
         A = input;
         e.resize(A.rows(),1);
         e.setOnes();
         /*Replace zeros with 0.00001 on the main diagonal*/
-        SparseMatrixR I;
+        SparseMatrixCol I;
         I.resize(A.rows(),A.cols());
         I.setIdentity();
         I = I*0.00001;
         A = A + I;
         x0 = e.sparseView();
       }
-      size_t outter_loop_count = 0;
+
       void outter_loop(){
+        size_t outter_loop_count = 0;
         double stop_tol = tol*0.5;
         double eta = etamax;
         x = x0;
+        assert(x.isVector());
         double rt = std::pow(tol,2);
         v = x.cwiseProduct(A*x);
         rk = Eigen::VectorXd::Constant(v.rows(),1) - v; //Vecotr of 1 - v
+        assert(rk.isVector());
         rho_km1 = rk.conjugate().transpose()*rk;
         rho_km2 = rho_km1;
         double rout = rho_km1.coeff(0,0);
@@ -59,10 +61,11 @@ class kr_balancing{
           inner_loop();
 
           x=x.cwiseProduct(y);
+          assert(x.isVector());
 
           v=x.cwiseProduct(A*x);
           rk = Eigen::VectorXd::Constant(v.rows(),1) - v;
-          rho_km1 = rk.conjugate().transpose()*rk;
+          rho_km1 = rk.transpose()*rk;
           rout = rho_km1.coeff(0,0);
           MVP = MVP + k + 1;
           //Update inner iteration stopping criterion.
@@ -86,15 +89,15 @@ class kr_balancing{
           if(k == 1){
             Z = rk.cwiseQuotient(v);
             p=Z;
-            rho_km1 = rk.conjugate().transpose()*Z;
+            rho_km1 = rk.transpose()*Z;
           }else{
             Eigen::VectorXd beta=rho_km1.cwiseQuotient(rho_km2);
             p = Z + (beta(0)*p);
 
           }
           //Update search direction efficiently.
-          SparseMatrixR w=x.cwiseProduct(A*(x.cwiseProduct(p))) + v.cwiseProduct(p);
-          SparseMatrixR alpha_mat = rho_km1.cwiseQuotient(p.conjugate().transpose()*w);
+          SparseMatrixCol w=x.cwiseProduct(A*(x.cwiseProduct(p))) + v.cwiseProduct(p);
+          SparseMatrixCol alpha_mat = rho_km1.cwiseQuotient(p.conjugate().transpose()*w);
           double alpha = alpha_mat.coeff(0,0);
           Eigen::VectorXd ap = alpha * p;
           //Test distance to boundary of cone.
@@ -136,11 +139,42 @@ class kr_balancing{
 
         }//End of the inner 'while'
       }
-      const SparseMatrixR* get_output(){
-        output = A.cwiseProduct(x*x.transpose());
-        std::cout << "export output of shape "<< output.rows() <<
-        " by " << output.rows()<<std::endl;
-        return &output;
+      const SparseMatrixCol* get_output(){
+  //      std::cout << "export output of shape "<< A.cwiseProduct(x*x.transpose()).rows() <<
+  //      " by " << A.cwiseProduct(x*x.transpose()).rows()<<std::endl;
+  //      std::cout << (x*x.transpose()).triangularView<Eigen::Lower>()<<std::endl;
+  //      SparseMatrixCol D = x*x.transpose();
+      //  Eigen::SparseTriangularView<Eigen::SparseMatrix<double>, Eigen::Lower> MView = D.triangularView<Eigen::Lower>();
+//        std::cout << D.triangularView<Eigen::Lower>() <<std::endl;
+  //      std::cout << "export output"<<std::endl;
+  //      output = (A.triangularView<Eigen::Lower>()).cwiseProduct((x*x.transpose()).triangularView<Eigen::Lower>());
+  //      std::cout << A.cwiseProduct(x*x.transpose()) << std::endl;
+  //      SparseMatrixCol diag_x;
+  //      diag_x.resize(x.rows(),x.rows());
+  //      diag_x = Eigen::MatrixXd(Eigen::MatrixXd(x).asDiagonal()).sparseView();
+  //      diag_x.makeCompressed();
+  //      std::cout << "diag x size " << diag_x.rows() << " x " << diag_x.cols()<<std::endl;
+
+      //  Eigen::MatrixXd dense_mat_x = dense_x.replicate(1,x.rows());
+      //  Eigen::MatrixXd dense_mat_x = dense_x*dense_x.transpose();
+      //  std::cout << diag_x <<std::endl;
+      //  SparseMatrixCol test = dense_x.sparseView();
+
+      //  std::cout << test <<std::endl;
+      //  SparseMatrixCol temp =  (dense_x.asDiagonal()*A).sparseView();
+      //  SparseMatrixCol temp1 = temp.cwiseProduct(x);
+      //  std::cout << "temp" <<std::endl;
+        assert(A.rows() == A.cols());
+        A = SparseMatrixCol(A.triangularView<Eigen::Lower>());
+        #pragma omp parallel for num_threads(num_threads) schedule(dynamic)
+        for (int k=0; k<A.outerSize(); ++k){
+            for(SparseMatrixCol::InnerIterator it(A,k); it; ++it){
+              it.valueRef() = it.value()*x.coeff(it.row(),0)*x.coeff(it.col(),0);
+
+            }
+          }
+
+        return &A;
       }
      private:
        std::vector<double> res;
@@ -150,28 +184,28 @@ class kr_balancing{
        double tol = 1e-6;
        double g = 0.9;
        double etamax = 0.1;
-       SparseMatrixR x0;
+       SparseMatrixCol x0;
        Eigen::MatrixXd e;
-       SparseMatrixR A;
-       SparseMatrixR rho_km1;
-       SparseMatrixR rho_km2;
+       SparseMatrixCol A;
+       SparseMatrixCol rho_km1;
+       SparseMatrixCol rho_km2;
        unsigned int k;
        Eigen::VectorXd y;
-       SparseMatrixR p;
-       SparseMatrixR Z;
+       SparseMatrixCol p;
+       SparseMatrixCol Z;
        double innertol;
        unsigned int i = 0; //Outer itteration count
        unsigned int MVP = 0;
-       SparseMatrixR v;
-       SparseMatrixR x;
+       SparseMatrixCol v;
+       SparseMatrixCol x;
        Eigen::SparseVector<double> rk;
-       SparseMatrixR output;
+       SparseMatrixCol output;
 };
 
 
 PYBIND11_MODULE(KRBalancing, m) {
   py::class_<kr_balancing>(m, "kr_balancing")
-    .def(py::init< const SparseMatrixR & >())
+    .def(py::init< const SparseMatrixCol & >())
     .def("outter_loop", &kr_balancing::outter_loop)
     .def("get_output",&kr_balancing::get_output, py::return_value_policy::reference_internal);
 
