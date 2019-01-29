@@ -36,36 +36,56 @@ class kr_balancing{
         I.setIdentity();
         I = I*0.00001;
         A = A + I;
-        x0 = e.sparseView();
+        x = e.sparseView();
+        // Eigen::MatrixXd test;
+        // test.resize(A.rows(),A.cols());
+        // SparseMatrixCol temp = test.sparseView();
+        // A = A + temp;
+        // A = A*1.00001;
+        // for (int k=0; k<A.outerSize(); ++k){
+        //     for(SparseMatrixCol::InnerIterator it(A,k); it; ++it){
+        //       std::cout << it.value() << " , ";
+        //     }
+        // }
       }
 
       void outter_loop(){
         size_t outter_loop_count = 0;
         double stop_tol = tol*0.5;
         double eta = etamax;
-        x = x0;
+  //      x = x0;
         assert(x.isVector());
         double rt = std::pow(tol,2);
         v = x.cwiseProduct(A*x);
         rk = Eigen::VectorXd::Constant(v.rows(),1) - v; //Vecotr of 1 - v
         assert(rk.isVector());
         rho_km1 = rk.conjugate().transpose()*rk;
+        assert(rho_km1.coeff(0,0)>=0);
         rho_km2 = rho_km1;
         double rout = rho_km1.coeff(0,0);
         double rold = rout;
         if(fl == 1) std::cout<< 'intermediate convergence statistics is off'<<std::endl;
-        while(rout > rt){//outer itteration
+        size_t nochange = 0;
+        while(rout > rt && nochange < 100){//outer itteration
           outter_loop_count ++;
           i=i+1; k=0; y=e.sparseView();
           innertol = std::max(std::pow(eta,2)*rout,rt);
           inner_loop();
-
+          assert(rho_km1.coeff(0,0) > 0);
+          assert(rho_km1.coeff(0,0) != std::numeric_limits<double>::infinity());
           x=x.cwiseProduct(y);
+//          std::cout << "x" << x << std::endl;
           assert(x.isVector());
-
-          v=x.cwiseProduct(A*x);
+          v=x.cwiseProduct((A*x));
+  //        std::cout << "v "<< v << std::endl;
           rk = Eigen::VectorXd::Constant(v.rows(),1) - v;
           rho_km1 = rk.transpose()*rk;
+          assert(rho_km1.coeff(0,0) > 0);
+          assert(rho_km1.coeff(0,0) != std::numeric_limits<double>::infinity());
+          if(std::abs(rout - rho_km1.coeff(0,0)) < 0.0000001 ||rho_km1.coeff(0,0) ==std::numeric_limits<double>::infinity()){
+            nochange++;
+  //          std::cout << "nochange " << rho_km1.coeff(0,0)<<std::endl;
+          }
           rout = rho_km1.coeff(0,0);
           MVP = MVP + k + 1;
           //Update inner iteration stopping criterion.
@@ -88,13 +108,18 @@ class kr_balancing{
           k++;
           if(k == 1){
             Z = rk.cwiseQuotient(v);
+  //          std::cout << "Z "<< Z << std::endl;
+  //          std::cout << "rk " << rk << std::endl;
+  //          std::cout << "v "<< v <<std::endl;
             p=Z;
             rho_km1 = rk.transpose()*Z;
           }else{
+  //          std::cout << "rho_km2 " << rho_km2 << std::endl;
             Eigen::VectorXd beta=rho_km1.cwiseQuotient(rho_km2);
             p = Z + (beta(0)*p);
 
           }
+//          std::cout << "p "<< p <<std::endl;
           //Update search direction efficiently.
           SparseMatrixCol w=x.cwiseProduct(A*(x.cwiseProduct(p))) + v.cwiseProduct(p);
           SparseMatrixCol alpha_mat = rho_km1.cwiseQuotient(p.conjugate().transpose()*w);
@@ -102,7 +127,7 @@ class kr_balancing{
           Eigen::VectorXd ap = alpha * p;
           //Test distance to boundary of cone.
           Eigen::VectorXd ynew = y + ap;
-
+  //        std::cout << "ynew.minCoeff() " << ynew.minCoeff() <<std::endl;
           if(ynew.minCoeff() <= delta){
             if(delta == 0) break;
             Eigen::Matrix<bool, Eigen::Dynamic , Eigen::Dynamic> ind_helper = (ap.array()<0);
@@ -110,11 +135,12 @@ class kr_balancing{
             ind.conservativeResize(std::stable_partition(
               ind.data(), ind.data()+ind.size(), [&ind_helper](int i){return ind_helper(i);})-ind.data());
             Eigen::VectorXd y_copy = y;
-            for(i = 0; i < ind.size(); i++){ //TODO proper masking? //ind_vec.unaryExpr(x);
+            for(size_t i = 0; i < ind.size(); i++){ //TODO proper masking? //ind_vec.unaryExpr(x);
                y_copy(ind(i)) = (delta - y_copy(ind(i)))/ap(i);
             }
             double gamma = y_copy.minCoeff();
             y = y + gamma*ap;
+  //          std::cout << y << std::endl;
             break;
           }
           if(ynew.minCoeff() >= Delta){
@@ -123,7 +149,7 @@ class kr_balancing{
             ind.conservativeResize(std::stable_partition(
               ind.data(), ind.data()+ind.size(), [&ind_helper](int i){return ind_helper(i);})-ind.data());
             Eigen::VectorXd y_copy = y;
-            for(i = 0; i < ind.size(); i++){ //TODO proper masking? //ind_vec.unaryExpr(x);
+            for(size_t i = 0; i < ind.size(); i++){ //TODO proper masking? //ind_vec.unaryExpr(x);
                  y_copy(ind(i)) = (Delta - y_copy(ind(i)))/ap(i);
             }
             double gamma = y_copy.minCoeff();
@@ -134,46 +160,25 @@ class kr_balancing{
           y = ynew;
           rk = rk - (alpha*w); rho_km2 = rho_km1;
           Z = rk.cwiseQuotient(v); rho_km1 = rk.conjugate().transpose()*Z;
+  //        std::cout << "rho_km1 "<< rho_km1 <<std::endl;
           if(inner_loop_count %100 ==0) std::cout << "inner loop number "<< inner_loop_count <<std::endl;
 
 
         }//End of the inner 'while'
       }
       const SparseMatrixCol* get_output(){
-  //      std::cout << "export output of shape "<< A.cwiseProduct(x*x.transpose()).rows() <<
-  //      " by " << A.cwiseProduct(x*x.transpose()).rows()<<std::endl;
-  //      std::cout << (x*x.transpose()).triangularView<Eigen::Lower>()<<std::endl;
-  //      SparseMatrixCol D = x*x.transpose();
-      //  Eigen::SparseTriangularView<Eigen::SparseMatrix<double>, Eigen::Lower> MView = D.triangularView<Eigen::Lower>();
-//        std::cout << D.triangularView<Eigen::Lower>() <<std::endl;
-  //      std::cout << "export output"<<std::endl;
-  //      output = (A.triangularView<Eigen::Lower>()).cwiseProduct((x*x.transpose()).triangularView<Eigen::Lower>());
-  //      std::cout << A.cwiseProduct(x*x.transpose()) << std::endl;
-  //      SparseMatrixCol diag_x;
-  //      diag_x.resize(x.rows(),x.rows());
-  //      diag_x = Eigen::MatrixXd(Eigen::MatrixXd(x).asDiagonal()).sparseView();
-  //      diag_x.makeCompressed();
-  //      std::cout << "diag x size " << diag_x.rows() << " x " << diag_x.cols()<<std::endl;
-
-      //  Eigen::MatrixXd dense_mat_x = dense_x.replicate(1,x.rows());
-      //  Eigen::MatrixXd dense_mat_x = dense_x*dense_x.transpose();
-      //  std::cout << diag_x <<std::endl;
-      //  SparseMatrixCol test = dense_x.sparseView();
-
-      //  std::cout << test <<std::endl;
-      //  SparseMatrixCol temp =  (dense_x.asDiagonal()*A).sparseView();
-      //  SparseMatrixCol temp1 = temp.cwiseProduct(x);
-      //  std::cout << "temp" <<std::endl;
         assert(A.rows() == A.cols());
         A = SparseMatrixCol(A.triangularView<Eigen::Lower>());
+  //      std::cout << "x is "<< std::endl;
+  //      std::cout << x << std::endl;
         #pragma omp parallel for num_threads(num_threads) schedule(dynamic)
         for (int k=0; k<A.outerSize(); ++k){
             for(SparseMatrixCol::InnerIterator it(A,k); it; ++it){
               it.valueRef() = it.value()*x.coeff(it.row(),0)*x.coeff(it.col(),0);
-
+  //            std::cout << it.value() << " ";
             }
           }
-
+  //        std::cout << " "<<std::endl;
         return &A;
       }
      private:
@@ -184,7 +189,7 @@ class kr_balancing{
        double tol = 1e-6;
        double g = 0.9;
        double etamax = 0.1;
-       SparseMatrixCol x0;
+  //     SparseMatrixCol x0;
        Eigen::MatrixXd e;
        SparseMatrixCol A;
        SparseMatrixCol rho_km1;
