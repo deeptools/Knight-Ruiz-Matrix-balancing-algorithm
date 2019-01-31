@@ -168,7 +168,6 @@ class kr_balancing{
        double tol = 1e-6;
        double g = 0.9;
        double etamax = 0.1;
-  //     SparseMatrixCol x0;
        Eigen::MatrixXd e;
        SparseMatrixCol A;
        SparseMatrixCol rho_km1;
