@@ -38,9 +38,9 @@ class kr_balancing{
   //      A = A + I;
       }
 
-      void outter_loop(){
+      void outer_loop(){
         x = e.sparseView();
-        size_t outter_loop_count = 0;
+        size_t outer_loop_count = 0;
         double stop_tol = tol*0.5;
         double eta = etamax;
         assert(x.isVector());
@@ -56,8 +56,8 @@ class kr_balancing{
         if(fl == 1) std::cout<< 'intermediate convergence statistics is off'<<std::endl;
         size_t nochange = 0;
         while(rout > rt){//outer itteration
-          outter_loop_count ++;
-//          if(outter_loop_count == 30) break;
+          outer_loop_count ++;
+//          if(outer_loop_count == 30) break;
           i=i+1; k=0; y=e.sparseView();
           innertol = std::max(std::pow(eta,2)*rout,rt);
           inner_loop();
@@ -83,7 +83,7 @@ class kr_balancing{
           if(fl == 1){
             res.push_back(res_norm);
           }
-          if(outter_loop_count %50 ==0) std::cout << "outer loop number "<< outter_loop_count <<std::endl;
+          if(outer_loop_count %50 ==0) std::cout << "outer loop number "<< outer_loop_count <<std::endl;
         }//End of outer loop
     //    if (nochange >= 100) {
     //       std::cout << "nochange >=100" <<std::endl;
@@ -150,7 +150,7 @@ class kr_balancing{
       }
       const SparseMatrixCol* get_output(){
         assert(A.rows() == A.cols());
-        A = SparseMatrixCol(A.triangularView<Eigen::Lower>());
+        A = SparseMatrixCol(A.triangularView<Eigen::Upper>());
 
         #pragma omp parallel for num_threads(num_threads) schedule(dynamic)
         for (int k=0; k<A.outerSize(); ++k){
@@ -190,7 +190,7 @@ class kr_balancing{
 PYBIND11_MODULE(KRBalancing, m) {
   py::class_<kr_balancing>(m, "kr_balancing")
     .def(py::init< const SparseMatrixCol & >())
-    .def("outter_loop", &kr_balancing::outter_loop)
+    .def("outer_loop", &kr_balancing::outer_loop)
     .def("get_output",&kr_balancing::get_output, py::return_value_policy::reference_internal);
 
 }
