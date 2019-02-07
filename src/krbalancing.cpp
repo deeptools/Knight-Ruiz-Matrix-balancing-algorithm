@@ -6,11 +6,11 @@ kr_balancing::kr_balancing(const  SparseMatrixCol & input){
     e.resize(A.rows(),1);
     e.setOnes();
     /*Replace zeros with 0.00001 on the main diagonal*/
-    //SparseMatrixCol I;
-    //I.resize(A.rows(),A.cols());
-    //I.setIdentity();
-    //I = I*0.00001;
-    //A = A + I;
+    SparseMatrixCol I;
+    I.resize(A.rows(),A.cols());
+    I.setIdentity();
+    I = I*0.00001;
+    A = A + I;
 }
 
 
