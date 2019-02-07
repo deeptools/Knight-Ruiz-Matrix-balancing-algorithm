@@ -1,0 +1,3 @@
+include src/krbalancing.hpp
+include src/krbalancing.cpp
+include setup.py
