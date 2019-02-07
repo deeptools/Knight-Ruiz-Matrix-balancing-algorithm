@@ -160,7 +160,7 @@ void kr_balancing::rescale_norm_vector(){
       }
     }
   }
-  std::cout << "normalisation factor "<< std::sqrt(norm_vector_sum/original_sum) <<std::endl;
+  std::cout << "normalisation factor is "<< std::sqrt(norm_vector_sum/original_sum) <<std::endl;
   x /= std::sqrt(norm_vector_sum/original_sum);
 
 }
