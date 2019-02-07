@@ -14,9 +14,9 @@ def get_include():  # TODO
     return Eigen_path
 
 
-sources_list = ['src/KRBalancing.cpp']
+sources_list = ['src/krbalancing.cpp']
 
-kr_module = Extension('KRBalancing',
+kr_module = Extension('krbalancing',
                       sources=sources_list,
                       include_dirs=[
                           # Path to eigen3 headers
@@ -28,11 +28,12 @@ kr_module = Extension('KRBalancing',
 
 
 setup(
-    name='KRBalancing',
+    name='krbalancing',
     version=__version__,
     author='Leily Rabbani',
     author_email='leila.rabbani@gmail.com',
     description='A c++ extension for python to balance a matrix using KR method',
     ext_modules=[kr_module],
-    install_requires=['pybind11>=2.2']
+    install_requires=['pybind11>=2.2'],
+#    headers = ['src/krbalancing.hpp']
 )
