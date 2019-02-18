@@ -1,7 +1,6 @@
 #include "krbalancing.hpp"
 
 kr_balancing::kr_balancing(const  SparseMatrixCol & input){
-    std::cout<< "read input"<<std::endl;
     A = input;
     e.resize(A.rows(),1);
     e.setOnes();
@@ -172,10 +171,19 @@ const SparseMatrixCol* kr_balancing::get_normalised_matrix(bool & rescale){
 }
 
 
+const SparseMatrixCol* kr_balancing::get_normalisation_vector(bool & rescale){
+  if(rescale ==true){
+    rescale_norm_vector();
+  }
+  return &x;
+}
+
+
 PYBIND11_MODULE(krbalancing, m) {
   py::class_<kr_balancing>(m, "kr_balancing")
     .def(py::init< const SparseMatrixCol & >())
     .def("computeKR", &kr_balancing::computeKR)
+    .def("get_normalisation_vector",&kr_balancing::get_normalisation_vector, py::return_value_policy::reference_internal)
     .def("get_normalised_matrix",&kr_balancing::get_normalised_matrix, py::return_value_policy::reference_internal);
 
 }
