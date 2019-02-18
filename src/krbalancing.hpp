@@ -34,6 +34,7 @@ class kr_balancing{
        void compute_normalised_matrix(bool & );
        void rescale_norm_vector();
        const SparseMatrixCol* get_normalised_matrix(bool & rescale);
+       const SparseMatrixCol* get_normalisation_vector(bool & rescale);
 
      private:
        std::vector<double> res;
