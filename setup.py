@@ -25,6 +25,13 @@ def __extra_compile_args():
     return extra_compile_args
 
 
+def __extra_link_args():
+    extra_link_args = []
+    if platform.system() != 'Darwin':
+        extra_link_args = ["-lgomp", "-lm", "-lrt"]
+    return extra_link_args
+
+
 sources_list = ['src/krbalancing.cpp']
 
 kr_module = Extension('krbalancing',
@@ -33,7 +40,7 @@ kr_module = Extension('krbalancing',
                           # Path to eigen3 headers
                           get_include()
                       ],
-                      extra_link_args=["-lgomp", "-lm", "-lrt"],
+                      extra_link_args=__extra_link_args(),
                       extra_compile_args=__extra_compile_args()
                       )
 
