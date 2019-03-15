@@ -1,5 +1,6 @@
 from setuptools.command.build_ext import build_ext
 from distutils.core import setup, Extension
+import platform
 import sys
 from sysconfig import get_config_var, get_paths
 import logging
@@ -14,6 +15,15 @@ def get_include():  # TODO
     return Eigen_path
 
 
+def __extra_compile_args():
+    extra_compile_args = []
+    if platform.system() == 'Darwin':
+        extra_compile_args = ["-std=c++11"]
+    else:
+        extra_compile_args = ["-fopenmp", "-std=c++11"]
+    return extra_compile_args
+
+
 sources_list = ['src/krbalancing.cpp']
 
 kr_module = Extension('krbalancing',
@@ -23,7 +33,7 @@ kr_module = Extension('krbalancing',
                           get_include()
                       ],
                       extra_link_args=["-lgomp", "-lm", "-lrt"],
-                      extra_compile_args=["-fopenmp", "-std=c++11"]
+                      extra_compile_args=__extra_compile_args()
                       )
 
 
