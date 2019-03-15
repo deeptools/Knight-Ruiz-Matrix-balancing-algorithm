@@ -17,7 +17,7 @@ def get_include():  # TODO
 
 def __extra_compile_args():
     extra_compile_args = []
-    if platform.system() == 'Darwin':
+    if platform.system() == 'darwin':
         extra_compile_args = ["-std=c++11"]
     else:
         extra_compile_args = ["-fopenmp", "-std=c++11"]
