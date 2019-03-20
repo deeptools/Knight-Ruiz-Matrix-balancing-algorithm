@@ -136,6 +136,7 @@ void kr_balancing::compute_normalised_matrix(bool & rescale){
     rescaled = true;
   }else{
     A = SparseMatrixCol(A.triangularView<Eigen::Upper>());
+    std::cout << "here!"<<std::endl;
   }
   #pragma omp parallel for num_threads(num_threads) schedule(dynamic)
   for (int k=0; k<A.outerSize(); ++k){
@@ -181,8 +182,9 @@ const SparseMatrixCol* kr_balancing::get_normalised_matrix(bool & rescale){
 
 
 const SparseMatrixCol* kr_balancing::get_normalisation_vector(bool & rescale){
-  if(rescale ==true && rescaled = false){
+  if(rescale ==true && rescaled == false){
     rescale_norm_vector();
+    rescaled = true;
   }
   return &x;
 }
