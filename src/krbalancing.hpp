@@ -59,6 +59,7 @@ class kr_balancing{
        SparseMatrixCol x;
        Eigen::SparseVector<double> rk;
        SparseMatrixCol output;
+       bool rescaled;
 };
 
 #endif

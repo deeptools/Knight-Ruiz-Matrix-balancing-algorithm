@@ -10,6 +10,7 @@ kr_balancing::kr_balancing(const  SparseMatrixCol & input){
     I.setIdentity();
     I = I*0.00001;
     A = A + I;
+    rescaled = false;
 }
 
 
@@ -130,8 +131,9 @@ void kr_balancing::inner_loop(){
 
 void kr_balancing::compute_normalised_matrix(bool & rescale){
   assert(A.rows() == A.cols());
-  if(rescale ==true){
+  if(rescale ==true && rescaled == false){
     rescale_norm_vector();
+    rescaled = true;
   }else{
     A = SparseMatrixCol(A.triangularView<Eigen::Upper>());
   }
@@ -179,7 +181,7 @@ const SparseMatrixCol* kr_balancing::get_normalised_matrix(bool & rescale){
 
 
 const SparseMatrixCol* kr_balancing::get_normalisation_vector(bool & rescale){
-  if(rescale ==true){
+  if(rescale ==true && rescaled = false){
     rescale_norm_vector();
   }
   return &x;
