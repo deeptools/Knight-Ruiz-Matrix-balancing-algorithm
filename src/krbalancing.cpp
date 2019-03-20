@@ -10,6 +10,7 @@ kr_balancing::kr_balancing(const  SparseMatrixCol & input){
     I.setIdentity();
     I = I*0.00001;
     A = A + I;
+    rescaled = false;
 }
 
 
@@ -130,12 +131,15 @@ void kr_balancing::inner_loop(){
 
 void kr_balancing::compute_normalised_matrix(bool & rescale){
   assert(A.rows() == A.cols());
-  A = SparseMatrixCol(A.triangularView<Eigen::Upper>());
-  if(rescale ==true){
+  if(rescale ==true && rescaled == false){
     rescale_norm_vector();
+    rescaled = true;
+  }else{
+    A = SparseMatrixCol(A.triangularView<Eigen::Upper>());
   }
   #pragma omp parallel for num_threads(num_threads) schedule(dynamic)
   for (int k=0; k<A.outerSize(); ++k){
+    #pragma omp critical
     for(SparseMatrixCol::InnerIterator it(A,k); it; ++it){
       it.valueRef() = it.value()*x.coeff(it.row(),0)*x.coeff(it.col(),0);
     }
@@ -145,10 +149,14 @@ void kr_balancing::compute_normalised_matrix(bool & rescale){
 
 //Rescaling the normalisation factor (x)
 void kr_balancing::rescale_norm_vector(){
-  double original_sum = 0;
-  double norm_vector_sum = 0;
-  #pragma omp parallel for num_threads(num_threads) schedule(dynamic)
+  double original_sum = 0.0;
+  double norm_vector_sum = 0.0;
+  assert(A.rows() == A.cols());
+  A = SparseMatrixCol(A.triangularView<Eigen::Upper>());
+
+  #pragma omp parallel for num_threads(num_threads)
   for (int k=0; k<A.outerSize(); ++k){
+    #pragma omp critical
     for(SparseMatrixCol::InnerIterator it(A,k); it; ++it){
       if(it.row()==it.col()){
         original_sum += it.value();
@@ -159,6 +167,7 @@ void kr_balancing::rescale_norm_vector(){
       }
     }
   }
+
   std::cout << "normalisation factor is "<< std::sqrt(norm_vector_sum/original_sum) <<std::endl;
   x /= std::sqrt(norm_vector_sum/original_sum);
 
@@ -172,8 +181,9 @@ const SparseMatrixCol* kr_balancing::get_normalised_matrix(bool & rescale){
 
 
 const SparseMatrixCol* kr_balancing::get_normalisation_vector(bool & rescale){
-  if(rescale ==true){
+  if(rescale ==true && rescaled == false){
     rescale_norm_vector();
+    rescaled = true;
   }
   return &x;
 }
