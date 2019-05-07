@@ -1,18 +1,46 @@
 #include "krbalancing.hpp"
 
-kr_balancing::kr_balancing(const  SparseMatrixCol & input){
-    A = input;
-    e.resize(A.rows(),1);
-    e.setOnes();
-    /*Replace zeros with 0.00001 on the main diagonal*/
-    SparseMatrixCol I;
-    I.resize(A.rows(),A.cols());
-    I.setIdentity();
-    I = I*0.00001;
-    A = A + I;
-    rescaled = false;
-}
+// kr_balancing::kr_balancing(const  SparseMatrixCol & input){
+//     A = input;
+//     e.resize(A.rows(),1);
+//     e.setOnes();
+//     /*Replace zeros with 0.00001 on the main diagonal*/
+//     SparseMatrixCol I;
+//     I.resize(A.rows(),A.cols());
+//     I.setIdentity();
+//     I = I*0.00001;
+//     A = A + I;
+//     rescaled = false;
+// }
 
+//TODO go vector by vector??
+kr_balancing::kr_balancing(const int & input_rows , const int & input_cols,
+                           const int & input_nnz,
+                           const Eigen::Ref<Eigen::VectorXi> input_nnzRows,
+                           const Eigen::Ref<Eigen::VectorXi> input_nnzCols,
+                           const Eigen::Ref<Eigen::VectorXd> input_values){
+
+            A.resize(input_rows,input_cols);
+            A.reserve(input_nnz);
+            typedef Eigen::Triplet<double> T;
+            std::vector<T> triplets;
+            triplets.reserve(input_nnz);
+            for(size_t i = 0; i < input_nnzRows.size(); i++){
+              triplets.push_back(T(input_nnzRows(i), input_nnzCols(i),
+                                   input_values(i)));
+            }
+            A.setFromTriplets(triplets.begin(), triplets.end());
+            //std::cout << A << std::endl;
+            e.resize(A.rows(),1);
+            e.setOnes();
+            /*Replace zeros with 0.00001 on the main diagonal*/
+            SparseMatrixCol I;
+            I.resize(A.rows(),A.cols());
+            I.setIdentity();
+            I = I*0.00001;
+            A = A + I;
+            rescaled = false;
+}
 
 void kr_balancing::computeKR(){
   x = e.sparseView();
@@ -191,7 +219,10 @@ const SparseMatrixCol* kr_balancing::get_normalisation_vector(bool & rescale){
 
 PYBIND11_MODULE(krbalancing, m) {
   py::class_<kr_balancing>(m, "kr_balancing")
-    .def(py::init< const SparseMatrixCol & >())
+    .def(py::init< const int &, const int &, const int &,
+                   const Eigen::Ref<Eigen::VectorXi>,
+                   const Eigen::Ref<Eigen::VectorXi>,
+                   const Eigen::Ref<Eigen::VectorXd> >())
     .def("computeKR", &kr_balancing::computeKR)
     .def("get_normalisation_vector",&kr_balancing::get_normalisation_vector, py::return_value_policy::reference_internal)
     .def("get_normalised_matrix",&kr_balancing::get_normalised_matrix, py::return_value_policy::reference_internal);

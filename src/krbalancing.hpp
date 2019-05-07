@@ -27,7 +27,11 @@ size_t num_threads = 10; //TODO add it as an argument to be set by user
 
 class kr_balancing{
      public:
-       kr_balancing(const  SparseMatrixCol & input);
+       kr_balancing(const int & input_rows , const int & input_cols,
+                    const int & input_nnz,
+                    const Eigen::Ref<Eigen::VectorXi> input_outer,
+                    const Eigen::Ref<Eigen::VectorXi> input_inner,
+                    const Eigen::Ref<Eigen::VectorXd> input_values);
        void computeKR();
        void outer_loop();
        void inner_loop();
