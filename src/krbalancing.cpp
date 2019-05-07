@@ -22,15 +22,18 @@ kr_balancing::kr_balancing(const int & input_rows , const int & input_cols,
 
             A.resize(input_rows,input_cols);
             A.reserve(input_nnz);
+            //Eigen::Map<SparseMatrix<double> > sm1(input_rows, input_cols,
+		        //    input_nnz, *outerIndexPtr,*innerIndexPtr,*values)
             typedef Eigen::Triplet<double> T;
             std::vector<T> triplets;
-            triplets.reserve(input_nnz);
+            triplets.reserve(input_nnz); //multi-thread!
+            std::cout<< "ref!"<<std::endl;
             for(size_t i = 0; i < input_nnzRows.size(); i++){
               triplets.push_back(T(input_nnzRows(i), input_nnzCols(i),
                                    input_values(i)));
             }
             A.setFromTriplets(triplets.begin(), triplets.end());
-            //std::cout << A << std::endl;
+            std::cout << "A is set!" << std::endl;
             e.resize(A.rows(),1);
             e.setOnes();
             /*Replace zeros with 0.00001 on the main diagonal*/
