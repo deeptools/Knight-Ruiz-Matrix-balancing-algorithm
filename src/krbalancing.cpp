@@ -31,6 +31,7 @@ kr_balancing::kr_balancing(const int & input_rows , const int & input_cols,
             size_t i = 0;
             size_t j_start = 0;
             size_t j_end = 0;
+
             std::cout << 'start to parse values' << std::endl;
             while (i < input_indptr.size() - 1) {
                 // j_start = input_indptr(i);
@@ -54,7 +55,7 @@ kr_balancing::kr_balancing(const int & input_rows , const int & input_cols,
             //   triplets.push_back(T(input_nnzRows(i), input_nnzCols(i),
             //                        input_values(i)));
             // }
-            // A.setFromTriplets(triplets.begin(), triplets.end());
+
             //std::cout << A << std::endl;
             e.resize(A.rows(),1);
             e.setOnes();
