@@ -20,6 +20,7 @@ kr_balancing::kr_balancing(const int & input_rows , const int & input_cols,
                            const Eigen::Ref<Eigen::VectorXi> input_indices,
                            const Eigen::Ref<Eigen::VectorXd> input_values){
 
+            // SparseMatrix<double> mat(rows,cols); 
             A.resize(input_rows,input_cols);
             A.reserve(input_nnz);
             typedef Eigen::Triplet<float> T;
@@ -30,24 +31,30 @@ kr_balancing::kr_balancing(const int & input_rows , const int & input_cols,
             size_t i = 0;
             size_t j_start = 0;
             size_t j_end = 0;
-
+            std::cout << 'start to parse values' << std::endl;
             while (i < input_indptr.size() - 1) {
-                j_start = input_indptr(i);
+                // j_start = input_indptr(i);
                 j_end = input_indptr(i+1);
 
-                while (j_start < j_end) {
-                    triplets.push_back(T(i, input_indices(j_start),
-                                   float(input_values(j_start))));
-                    j_start++;
+                #pragma omp parallel
+                for (j_start = input_indptr(i); j_start < j_end; j_start++) {
+                // while (j_start < j_end) {
+                    #pragma omp critical
+                    A.insert(i, input_indices(j_start)) = float(input_values(j_start));
+                    // triplets.push_back(T(i, input_indices(j_start),
+                    //                float(input_values(j_start))));
+                    // j_start++;
 
                 }
                 i++;
             }
+            std::cout << 'end parsing values' << std::endl;
+
             // for(size_t i = 0; i < input_nnzRows.size(); i++){
             //   triplets.push_back(T(input_nnzRows(i), input_nnzCols(i),
             //                        input_values(i)));
             // }
-            A.setFromTriplets(triplets.begin(), triplets.end());
+            // A.setFromTriplets(triplets.begin(), triplets.end());
             //std::cout << A << std::endl;
             e.resize(A.rows(),1);
             e.setOnes();
