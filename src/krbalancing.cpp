@@ -13,26 +13,33 @@
 //     rescaled = false;
 // }
 
-//TODO go vector by vector??
 kr_balancing::kr_balancing(const int & input_rows , const int & input_cols,
                            const int & input_nnz,
                            const Eigen::Ref<Eigen::VectorXi> input_nnzRows,
                            const Eigen::Ref<Eigen::VectorXi> input_nnzCols,
                            const Eigen::Ref<Eigen::VectorXd> input_values){
-
-            A.resize(input_rows,input_cols);
-            A.reserve(input_nnz);
+            std::cout << input_nnz << " "<< input_cols <<std::endl;
+            SparseMatrixCol mat(input_rows,input_cols);
+            //A.resize(input_rows,input_cols);
+            std::cout << "A resized "<<std::endl;
+            mat.reserve(Eigen::VectorXi::Constant(input_cols,input_nnz));
+            //A.reserve(input_nnz*input_cols);
+            std::cout << " A initiated " << std::endl;
             //Eigen::Map<SparseMatrix<double> > sm1(input_rows, input_cols,
 		        //    input_nnz, *outerIndexPtr,*innerIndexPtr,*values)
             typedef Eigen::Triplet<double> T;
             std::vector<T> triplets;
-            triplets.reserve(input_nnz); //multi-thread!
-            std::cout<< "ref!"<<std::endl;
+            triplets.reserve(input_nnz*input_cols); //TODO
+            std::cout<< "ref!" << input_nnz <<std::endl;
+            #pragma omp parallel for num_threads(num_threads) schedule(dynamic)
             for(size_t i = 0; i < input_nnzRows.size(); i++){
-              triplets.push_back(T(input_nnzRows(i), input_nnzCols(i),
-                                   input_values(i)));
+              //triplets.push_back(T(input_nnzRows(i), input_nnzCols(i),
+              //                     input_values(i)));
+                mat.insert(input_nnzRows(i), input_nnzCols(i))=input_values(i);
             }
-            A.setFromTriplets(triplets.begin(), triplets.end());
+            //A.setFromTriplets(triplets.begin(), triplets.end());
+            A = mat;
+            //std::cout << A <<std::endl;
             std::cout << "A is set!" << std::endl;
             e.resize(A.rows(),1);
             e.setOnes();
