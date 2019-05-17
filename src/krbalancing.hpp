@@ -32,6 +32,7 @@ class kr_balancing{
                     const Eigen::Ref<Eigen::VectorXi> input_outer,
                     const Eigen::Ref<Eigen::VectorXi> input_inner,
                     const Eigen::Ref<Eigen::VectorXd> input_values);
+       ~kr_balancing(){}
        void computeKR();
        void outer_loop();
        void inner_loop();
