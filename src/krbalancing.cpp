@@ -20,7 +20,6 @@ kr_balancing::kr_balancing(const int & input_rows , const int & input_cols,
                            const Eigen::Ref<Eigen::VectorXd> input_values){
 
 
-            // SparseMatrix<Xd> mat(rows,cols);
             A.resize(input_rows,input_cols);
             A.reserve(input_nnz);
             typedef Eigen::Triplet<float> T;
