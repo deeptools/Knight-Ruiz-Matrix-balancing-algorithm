@@ -49,7 +49,6 @@ kr_balancing::kr_balancing(const int & input_rows , const int & input_cols,
             }
             std::cout << "end parsing values" << std::endl;
 
-
             A.setFromTriplets(triplets.begin(), triplets.end()); //bottleneck
             //A.makeCompressed();
             triplets.clear();
@@ -190,48 +189,50 @@ void kr_balancing::inner_loop(){
 
 
 void kr_balancing::compute_normalised_matrix(bool & rescale){
-   assert(A.rows() == A.cols());
-   if(rescale ==true && rescaled == false){
-     rescale_norm_vector();
-     rescaled = true;
-   }else{
-     A = SparseMatrixCol(A.triangularView<Eigen::Upper>());
-   }
-   #pragma omp parallel for num_threads(num_threads) schedule(dynamic)
-   for (int k=0; k<A.outerSize(); ++k){
-     #pragma omp critical
-     for(SparseMatrixCol::InnerIterator it(A,k); it; ++it){
-       it.valueRef() = it.value()*x.coeff(it.row(),0)*x.coeff(it.col(),0);
-     }
-   }
+  
+  assert(A.rows() == A.cols());
+  if(rescale ==true && rescaled == false){
+    rescale_norm_vector();
+    rescaled = true;
+  }else{
+    A = SparseMatrixCol(A.triangularView<Eigen::Upper>());
+  }
+  #pragma omp parallel for num_threads(num_threads) schedule(dynamic)
+  for (int k=0; k<A.outerSize(); ++k){
+    #pragma omp critical
+    for(SparseMatrixCol::InnerIterator it(A,k); it; ++it){
+      it.valueRef() = it.value()*x.coeff(it.row(),0)*x.coeff(it.col(),0);
+    }
+  }
+  
 }
 
 
 //Rescaling the normalisation factor (x)
 void kr_balancing::rescale_norm_vector(){
-   float original_sum = 0.0;
-   float norm_vector_sum = 0.0;
-   assert(A.rows() == A.cols());
-   A = SparseMatrixCol(A.triangularView<Eigen::Upper>());
 
-   #pragma omp parallel for num_threads(num_threads)
-   for (int k=0; k<A.outerSize(); ++k){
-     #pragma omp critical
-     for(SparseMatrixCol::InnerIterator it(A,k); it; ++it){
-       if(it.row()==it.col()){
-         original_sum += it.value();
-         norm_vector_sum += it.value()*x.coeff(it.row(),0)*x.coeff(it.col(),0);
-       }else{
-         original_sum += it.value()*2;
-         norm_vector_sum += it.value()*x.coeff(it.row(),0)*x.coeff(it.col(),0)*2;
-       }
-     }
-   }
+  float original_sum = 0.0;
+  float norm_vector_sum = 0.0;
+  assert(A.rows() == A.cols());
+  A = SparseMatrixCol(A.triangularView<Eigen::Upper>());
 
-   std::cout << "normalisation factor is "<<
-   std::sqrt(norm_vector_sum/original_sum) <<std::endl;
-   x /= std::sqrt(norm_vector_sum/original_sum);
+  #pragma omp parallel for num_threads(num_threads)
+  for (int k=0; k<A.outerSize(); ++k){
+    #pragma omp critical
+    for(SparseMatrixCol::InnerIterator it(A,k); it; ++it){
+      if(it.row()==it.col()){
+        original_sum += it.value();
+        norm_vector_sum += it.value()*x.coeff(it.row(),0)*x.coeff(it.col(),0);
+      }else{
+        original_sum += it.value()*2;
+        norm_vector_sum += it.value()*x.coeff(it.row(),0)*x.coeff(it.col(),0)*2;
+      }
+    }
+  }
 
+  std::cout << "normalisation factor is "<< std::sqrt(norm_vector_sum/original_sum) <<std::endl;
+  x /= std::sqrt(norm_vector_sum/original_sum);
+  
 }
 
 
@@ -242,10 +243,12 @@ const SparseMatrixCol* kr_balancing::get_normalised_matrix(bool & rescale){
 
 
 const SparseMatrixCol* kr_balancing::get_normalisation_vector(bool & rescale){
+  
   if(rescale ==true && rescaled == false){
-     rescale_norm_vector();
-     rescaled = true;
+    rescale_norm_vector();
+    rescaled = true;
   }
+  
   return &x;
 }
 
