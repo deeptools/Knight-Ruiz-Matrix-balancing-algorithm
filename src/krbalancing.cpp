@@ -50,7 +50,7 @@ kr_balancing::kr_balancing(const int & input_rows , const int & input_cols,
             std::cout << "end parsing values" << std::endl;
 
 
-            A.setFromTriplets(triplets.begin(), triplets.end());
+            A.setFromTriplets(triplets.begin(), triplets.end()); //bottleneck
             //A.makeCompressed();
             triplets.clear();
 

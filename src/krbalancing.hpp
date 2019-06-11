@@ -22,7 +22,7 @@
 #include <omp.h>
 #include <limits>
 namespace py = pybind11;
-using SparseMatrixCol = Eigen::SparseMatrix<double,Eigen::ColMajor>;
+using SparseMatrixCol = Eigen::SparseMatrix<double, Eigen::ColMajor>;
 size_t num_threads = 10; //TODO add it as an argument to be set by user
 
 class kr_balancing{
