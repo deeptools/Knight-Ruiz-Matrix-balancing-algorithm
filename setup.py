@@ -5,7 +5,7 @@ import sys
 from sysconfig import get_config_var, get_paths
 import logging
 
-__version__ = '0.0.5dev'
+__version__ = '0.0.5'
 
 
 def get_include():  # TODO
