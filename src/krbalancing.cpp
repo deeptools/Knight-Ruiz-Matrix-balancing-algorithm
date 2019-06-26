@@ -13,10 +13,10 @@
 //     rescaled = false;
 // }
 
-kr_balancing::kr_balancing(const size_t &input_rows, const size_t &input_cols,
-                           const size_t &input_nnz,
-                           const Eigen::Ref<VectorXsize_t> input_indptr,
-                           const Eigen::Ref<VectorXsize_t> input_indices,
+kr_balancing::kr_balancing(const int64_t &input_rows, const int64_t &input_cols,
+                           const int64_t &input_nnz,
+                           const Eigen::Ref<VectorXint64> input_indptr,
+                           const Eigen::Ref<VectorXint64> input_indices,
                            const Eigen::Ref<Eigen::VectorXd> input_values)
 {
 
@@ -26,9 +26,9 @@ kr_balancing::kr_balancing(const size_t &input_rows, const size_t &input_cols,
   std::vector<T> triplets;
   triplets.reserve(input_nnz);
 
-  size_t i = 0;
-  size_t j_start = 0;
-  size_t j_end = 0;
+  int64_t i = 0;
+  int64_t j_start = 0;
+  int64_t j_end = 0;
   while (i < input_indptr.size() - 1)
   {
     j_start = input_indptr(i);
@@ -36,7 +36,7 @@ kr_balancing::kr_balancing(const size_t &input_rows, const size_t &input_cols,
 
     while (j_start < j_end)
     {
-      triplets.push_back(T(i, size_t(input_indices(j_start)),
+      triplets.push_back(T(i, int64_t(input_indices(j_start)),
                            float(input_values(j_start))));
       j_start++;
     }
@@ -75,7 +75,7 @@ void kr_balancing::computeKR()
 
 void kr_balancing::outer_loop()
 {
-  size_t outer_loop_count = 0;
+  int64_t outer_loop_count = 0;
   double stop_tol = tol * 0.5;
   double eta = etamax;
   double rt = tol * tol;
@@ -83,7 +83,7 @@ void kr_balancing::outer_loop()
   double rold = rout;
   if (fl == 1)
     std::cout << "intermediate convergence statistics is off" << std::endl;
-  size_t nochange = 0;
+  int64_t nochange = 0;
   while (rout > rt)
   { //outer itteration
     outer_loop_count++;
@@ -168,7 +168,7 @@ void kr_balancing::inner_loop()
       if (delta == 0)
         break;
       Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> ind_helper = (ap.array() < 0);
-      VectorXsize_t ind = VectorXsize_t::LinSpaced(ind_helper.size(), 0, ind_helper.size() - 1);
+      VectorXint64 ind = VectorXint64::LinSpaced(ind_helper.size(), 0, ind_helper.size() - 1);
       ind.conservativeResize(std::stable_partition(
                                  ind.data(), ind.data() + ind.size(), [&ind_helper](int i) { return ind_helper(i); }) -
                              ind.data());
@@ -185,7 +185,7 @@ void kr_balancing::inner_loop()
     if (ynew.maxCoeff() >= Delta)
     {
       Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> ind_helper = (ynew.array() > Delta);
-      VectorXsize_t ind = VectorXsize_t::LinSpaced(ind_helper.size(), 0, ind_helper.size() - 1);
+      VectorXint64 ind = VectorXint64::LinSpaced(ind_helper.size(), 0, ind_helper.size() - 1);
       ind.conservativeResize(std::stable_partition(
                                  ind.data(), ind.data() + ind.size(), [&ind_helper](size_t i) { return ind_helper(i); }) -
                              ind.data());
@@ -284,9 +284,9 @@ const SparseMatrixCol *kr_balancing::get_normalisation_vector(bool &rescale)
 PYBIND11_MODULE(krbalancing, m)
 {
   py::class_<kr_balancing>(m, "kr_balancing")
-      .def(py::init<const size_t &, const size_t &, const size_t &,
-                    const Eigen::Ref<VectorXsize_t>,
-                    const Eigen::Ref<VectorXsize_t>,
+      .def(py::init<const int64_t &, const int64_t &, const int64_t &,
+                    const Eigen::Ref<VectorXint64>,
+                    const Eigen::Ref<VectorXint64>,
                     const Eigen::Ref<Eigen::VectorXd>>())
       .def("computeKR", &kr_balancing::computeKR)
       .def("get_normalisation_vector", &kr_balancing::get_normalisation_vector,
