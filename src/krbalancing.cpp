@@ -1,18 +1,5 @@
 #include "krbalancing.hpp"
 
-// kr_balancing::kr_balancing(const  SparseMatrixCol & input){
-//     A = input;
-//     e.resize(A.rows(),1);
-//     e.setOnes();
-//     /*Replace zeros with 0.00001 on the main diagonal*/
-//     SparseMatrixCol I;
-//     I.resize(A.rows(),A.cols());
-//     I.setIdentity();
-//     I = I*0.00001;
-//     A = A + I;
-//     rescaled = false;
-// }
-
 kr_balancing::kr_balancing(const int64_t &input_rows, const int64_t &input_cols,
                            const int64_t &input_nnz,
                            const Eigen::Ref<VectorXint64> input_indptr,
@@ -43,6 +30,7 @@ kr_balancing::kr_balancing(const int64_t &input_rows, const int64_t &input_cols,
     i++;
   }
   A.setFromTriplets(triplets.begin(), triplets.end()); //bottleneck
+
 
   triplets.clear();
 
@@ -211,6 +199,7 @@ void kr_balancing::compute_normalised_matrix(bool &rescale)
 {
 
   assert(A.rows() == A.cols());
+
   if (rescale == true && rescaled == false)
   {
     rescale_norm_vector();
@@ -227,6 +216,7 @@ void kr_balancing::compute_normalised_matrix(bool &rescale)
     for (SparseMatrixCol::InnerIterator it(A, k); it; ++it)
     {
       it.valueRef() = it.value() * x.coeff(it.row(), 0) * x.coeff(it.col(), 0);
+
     }
   }
 }
@@ -258,7 +248,6 @@ void kr_balancing::rescale_norm_vector()
       }
     }
   }
-
   std::cout << "normalisation factor is " << std::sqrt(norm_vector_sum / original_sum) << std::endl;
   x /= std::sqrt(norm_vector_sum / original_sum);
 }
@@ -274,6 +263,7 @@ const SparseMatrixCol *kr_balancing::get_normalisation_vector(bool &rescale)
 
   if (rescale == true && rescaled == false)
   {
+
     rescale_norm_vector();
     rescaled = true;
   }

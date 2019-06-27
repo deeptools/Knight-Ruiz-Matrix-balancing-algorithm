@@ -69,6 +69,7 @@ private:
   Eigen::SparseVector<double> rk;
   SparseMatrixCol output;
   bool rescaled;
+
 };
 
 #endif
