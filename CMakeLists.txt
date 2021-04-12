@@ -1,5 +1,9 @@
+#
+# NOTE: This should be called by setup.py file.
+# 
+
 cmake_minimum_required(VERSION 3.12)
-project(krbalancing VERSION 0.0.5)
+project(krbalancing)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
@@ -13,6 +17,11 @@ endif()
 include(${CMAKE_SOURCE_DIR}/cmake/conan.cmake)
 
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+execute_process(COMMAND ${Python3_EXECUTABLE} setup.py --version
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE CMAKE_PROJECT_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+message(STATUS " project version ${CMAKE_PROJECT_VERSION}")
 
 # pybind11 config file has a bug that makes is impossible to use with
 # conan_cmake_configure.
@@ -39,16 +48,5 @@ conan_cmake_run(REQUIRES pybind11/2.6.1
     BUILD missing)
 
 
-Python3_add_library(krbalancing MODULE WITH_SOABI src/krbalancing.cpp)
+pybind11_add_module(krbalancing  src/krbalancing.cpp)
 target_link_libraries(krbalancing PRIVATE Eigen3::Eigen CONAN_PKG::pybind11)
-set_target_properties(krbalancing PROPERTIES
-    INTERPROCEDURAL_OPTIMIZATION ON
-    VISIBLITY_INLINES_HIDDEN ON)
-
-configure_file(${CMAKE_SOURCE_DIR}/setup.py.in ${CMAKE_BINARY_DIR}/setup.py)
-
-add_custom_target(wheel ALL 
-    DEPENDS krbalancing
-    COMMAND ${Python3_EXECUTABLE} setup.py bdist_wheel -d ${CMAKE_BINARY_DIR}
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMENT "Generating wheel")

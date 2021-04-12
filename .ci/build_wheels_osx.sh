@@ -28,27 +28,10 @@ $PYTHON -m pip install twine  --upgrade
 $PYTHON -m pip install pytest  --upgrade
 
 ( 
-    mkdir -p _build_wheel && cd _build_wheel
-    ls -ltr
-    cmake ../.. -DPython3_EXECUTABLE=$PYTHON
-    make -j4 
-    make wheel
-    ctest --output-on-failure
+    $PYTHON setup.py bdist_wheel -d .
     delocate-wheel -w $WHEELHOUSE -v *.whl
     ls $WHEELHOUSE/krbalancing*.whl
-
-    ## NOTE: I am contantly getting  the following error in venv.
-    ## $ python -c 'import krbalancing; print(krbalancing.__version__ )'
-    ## Fatal Python error: PyMUTEX_LOCK(gil->mutex) failed
-
-    ## create a virtualenv and test this.
-    ##VENV=$(pwd)/venv
-    ##rm -rf $VENV
     (
-        # $PYTHON -m venv $VENV
-        # source $VENV/bin/activate
-        # which python
-        # now use venv pyhton.
         $PYTHON --version
         $PYTHON -m pip install $WHEELHOUSE/krbalancing*.whl
         $PYTHON -c 'import krbalancing; print(krbalancing.__version__ )'

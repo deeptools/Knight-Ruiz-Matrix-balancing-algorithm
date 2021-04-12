@@ -21,20 +21,15 @@ for PYDIR in $PYDIR39 $PYDIR38 $PYDIR37; do
 
     # dependencies
     $PYTHON -m pip install auditwheel pytest
-    rm -rf _build_wheel_linux
-    mkdir _build_wheel_linux
     (
-        cd _build_wheel_linux
-	    # cmake version must be higher than 3.12
+        cd ..
+	    # # cmake version must be higher than 3.12
 	    PYLIB=$(ls -d $PYDIR/lib/python3.*)
 	    PYINDIR=$(ls -d $PYDIR/include/python3.*)
-        cmake ../../ \
-            -DCMAKE_INSTALL_PREFIX=/usr \
-	        -DPython3_EXECUTABLE=$PYTHON \
-	        -DPython3_INCLUDE_DIR=$PYINDIR \
-	        -DPython3_LIBRARY=$PYLIB 
-        make -j`nproc` 
-        make wheel 
+        $PYTHON setup.py build_ext \
+            --cmake-extra-args \
+            "-DPython3_INCLUDE_DIR=$PYINDIR -DPython3_LIBRARY=$PYLIB"
+        $PYTHON setup.py bdist_wheel --skip-build -d .
         $PYTHON -m auditwheel repair *.whl -w $WHEELHOUSE
 
 	# install and test it
