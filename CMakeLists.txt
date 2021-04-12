@@ -14,9 +14,12 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+find_package(OpenMP REQUIRED)
+
 include(${CMAKE_SOURCE_DIR}/cmake/conan.cmake)
 
-find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+
 execute_process(COMMAND ${Python3_EXECUTABLE} setup.py --version
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     OUTPUT_VARIABLE CMAKE_PROJECT_VERSION
@@ -51,3 +54,4 @@ conan_cmake_run(REQUIRES pybind11/2.6.1
 
 pybind11_add_module(krbalancing  src/krbalancing.cpp)
 target_link_libraries(krbalancing PRIVATE Eigen3::Eigen CONAN_PKG::pybind11)
+target_link_libraries(krbalancing PRIVATE OpenMP::OpenMP_CXX)
