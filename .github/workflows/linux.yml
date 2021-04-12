@@ -33,9 +33,9 @@ jobs:
           python -c "import krbalancing; print(krbalancing.__file__); print(krbalancing.__version__)"
           python setup.py sdist -d .
     - name: upload sdist
+      env:
+        PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        env:
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         python3 -m twine upload  \
           -u __token__ -p $PYPI_PASSWORD --skip-existing \
           krbalancing*.tar.gz \
