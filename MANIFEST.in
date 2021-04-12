@@ -1,3 +1,5 @@
 include src/krbalancing.hpp
 include src/krbalancing.cpp
 include setup.py
+include CMakeLists.txt
+include README.md
