@@ -1,0 +1,37 @@
+import setuptools
+import setuptools.command.install
+
+__version__ = "@CMAKE_PROJECT_VERSION@"
+
+# See https://github.com/google/or-tools/issues/616 and https://github.com/bigartm/bigartm/issues/840
+class InstallPlatLib(setuptools.command.install.install):
+    def finalize_options(self):
+        setuptools.command.install.install.finalize_options(self)
+        if self.distribution.has_ext_modules():
+            self.install_lib = self.install_platlib
+
+
+# See  https://stackoverflow.com/a/36886459/1805129
+class BinaryDistribution(setuptools.Distribution):
+    """Always force a binray distribution."""
+
+    def is_pure(self):
+        return False
+
+    def has_ext_modules(foo):
+        return True
+
+
+setuptools.setup(
+    name="krbalancing",
+    description="A c++ extension for python to balance a matrix using KR method",
+    version=__version__,
+    author="Leily Rabbani",
+    author_email="leila.rabbani@gmail.com",
+    maintainer="Dilawar Singh",
+    maintainer_email="dilawar.s.rajput@gmail.com",
+    packages=["krbalancing"],
+    package_dir={"krbalancing": "."},
+    package_data={"krbalancing": ["krbalancing*.*"]},
+    distclass=BinaryDistribution,
+)
