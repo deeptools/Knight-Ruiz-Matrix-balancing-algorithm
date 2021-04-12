@@ -20,10 +20,17 @@ for PYDIR in $PYDIR39 $PYDIR38 $PYDIR37; do
     PYTHON=$PYDIR/bin/python
 
     # dependencies
-    $PYTHON -m pip install auditwheel pytest
+    $PYTHON -m pip install auditwheel pytest 
     (
         cd ..
-        rm -rf build  || echo "build does not exists"
+        git clean -fxd .
+
+        rm -f /usr/local/bin/conan || echo "Failed to unlink conan"
+
+        $PYTHON -m pip install conan
+        ln -s $PYDIR/bin/conan /usr/local/bin/conan
+        rm -rf $(conan config home) || echo "Failed to remove conan old home"
+
 	    PYLIB=$(ls -d $PYDIR/lib/python3.*)
 	    PYINDIR=$(ls -d $PYDIR/include/python3.*)
         $PYTHON setup.py build_ext \

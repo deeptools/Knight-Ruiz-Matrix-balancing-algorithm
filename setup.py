@@ -68,7 +68,7 @@ class CMakeBuild(build_ext):
         # CMakeLists.txt is in the same directory as this setup.py file
         cmake_list_dir = os.path.abspath(os.path.dirname(__file__))
         print(f"\n\n{'='*10} Running CMake prepare {'='*40}")
-        #  print(f"[DEBUG] Running {' '.join(cmake_args)} in {self.build_temp}.")
+        print(f"[INFO] Running {' '.join(cmake_args)} in {self.build_temp}.")
         subprocess.check_call(
             ["cmake", cmake_list_dir] + cmake_args, cwd=self.build_temp, env=env
         )

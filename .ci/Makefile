@@ -14,13 +14,7 @@ build : ./Dockerfile ./build_wheels_linux.sh
 wheels : ./Dockerfile ./build_wheels_linux.sh build
 	mkdir -p $(HOME)/wheelhouse
 	# Generate version.
-	docker run -e PYPI_PASSWORD=$(PYPI_PASSWORD) \
-		$(LABEL)
+	docker run -e PYPI_PASSWORD=$(PYPI_PASSWORD) $(LABEL)
 
-
-test : build
-	docker run -it \
-	    --env="DISPLAY" \
-	    --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
-	    --rm \
-	    dilawars/smoldyn:latest bash
+test:
+	docker run -it $(LABEL) bash
