@@ -7,8 +7,6 @@ brew install cmake || echo "Failed to install cmake"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-export PATH=/usr/local/bin:$PATH
-
 WHEELHOUSE=$HOME/wheelhouse
 rm -rf $WHEELHOUSE && mkdir -p $WHEELHOUSE
 
@@ -26,7 +24,7 @@ $PYTHON -m pip install wheel --upgrade
 $PYTHON -m pip install delocate --upgrade
 $PYTHON -m pip install twine  --upgrade
 $PYTHON -m pip install pytest  --upgrade
-$PYTHON -m pip install cmake  --upgrade
+$PYTHON -m pip install conan  --upgrade
 
 ( 
     cd ..
