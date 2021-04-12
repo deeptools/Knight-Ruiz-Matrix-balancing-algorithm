@@ -28,6 +28,7 @@ $PYTHON -m pip install twine  --upgrade
 $PYTHON -m pip install pytest  --upgrade
 
 ( 
+    cd ..
     $PYTHON setup.py bdist_wheel -d .
     delocate-wheel -w $WHEELHOUSE -v *.whl
     ls $WHEELHOUSE/krbalancing*.whl
