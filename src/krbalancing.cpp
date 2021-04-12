@@ -284,7 +284,7 @@ PYBIND11_MODULE(krbalancing, m)
       .def("get_normalised_matrix", &kr_balancing::get_normalised_matrix,
            py::return_value_policy::reference_internal, py::arg().noconvert());
 
-  m.attr("__version__") = "@CMAKE_PROJECT_VERSION@";
+  m.attr("__version__") = CMAKE_PROJECT_VERSION;
 }
 
 //c++ -O3 -Wall -I /path/to/eigen -shared -std=c++11 -fPIC $(python3 -m pybind11 --includes) KRBalancing.cpp -o KRBalancing$(python3-config --extension-suffix)

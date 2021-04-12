@@ -22,6 +22,7 @@ execute_process(COMMAND ${Python3_EXECUTABLE} setup.py --version
     OUTPUT_VARIABLE CMAKE_PROJECT_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 message(STATUS " project version ${CMAKE_PROJECT_VERSION}")
+add_definitions(-DCMAKE_PROJECT_VERSION=\"${CMAKE_PROJECT_VERSION}\")
 
 # pybind11 config file has a bug that makes is impossible to use with
 # conan_cmake_configure.
