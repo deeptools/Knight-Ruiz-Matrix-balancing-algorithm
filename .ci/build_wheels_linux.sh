@@ -13,10 +13,9 @@ PYDIR37=/opt/python/cp37-cp37m/
 PYDIR38=/opt/python/cp38-cp38/
 PYDIR39=/opt/python/cp39-cp39/
 
-export PATH=$PYDIR39/bin:$PATH
-$PYDIR39/bin/python3 -m pip install conan
-
 for PYDIR in $PYDIR39 $PYDIR38 $PYDIR37; do
+
+    export PATH=$PYDIR/bin:$PATH
     PYTHON=$PYDIR/bin/python
 
     # dependencies
@@ -25,10 +24,8 @@ for PYDIR in $PYDIR39 $PYDIR38 $PYDIR37; do
         cd ..
         git clean -fxd .
 
-        rm -f /usr/local/bin/conan || echo "Failed to unlink conan"
-
         $PYTHON -m pip install conan
-        ln -s $PYDIR/bin/conan /usr/local/bin/conan
+
         rm -rf $(conan config home) || echo "Failed to remove conan old home"
 
 	    PYLIB=$(ls -d $PYDIR/lib/python3.*)
