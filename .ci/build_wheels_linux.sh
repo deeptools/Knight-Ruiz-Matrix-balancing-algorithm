@@ -23,12 +23,12 @@ for PYDIR in $PYDIR39 $PYDIR38 $PYDIR37; do
     $PYTHON -m pip install auditwheel pytest
     (
         cd ..
-	    # # cmake version must be higher than 3.12
+        rm -rf build  || echo "build does not exists"
 	    PYLIB=$(ls -d $PYDIR/lib/python3.*)
 	    PYINDIR=$(ls -d $PYDIR/include/python3.*)
         $PYTHON setup.py build_ext \
             --cmake-extra-args \
-            "-DPython3_INCLUDE_DIR=$PYINDIR -DPython3_LIBRARY=$PYLIB"
+            "-DPython3_EXECUTABLE=$PYTHON -DPython3_INCLUDE_DIR=$PYINDIR -DPython3_LIBRARY=$PYLIB"
         $PYTHON setup.py bdist_wheel --skip-build -d .
         $PYTHON -m auditwheel repair *.whl -w $WHEELHOUSE
 
@@ -37,8 +37,8 @@ for PYDIR in $PYDIR39 $PYDIR38 $PYDIR37; do
         $PYTHON -c 'import krbalancing; print(dir(krbalancing))'
         $PYTHON -c 'import krbalancing; print(krbalancing.__version__ )'
 
-	# remove it
-        rm -rf *.whl
+	# remove the old wheel
+        rm -rf *.whl 
     )
 done
 

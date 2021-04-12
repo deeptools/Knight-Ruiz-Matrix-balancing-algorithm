@@ -3,9 +3,9 @@ MAINTAINER Dilawar Singh <dilawar.s.rajput@gmail.com>
 
 ENV PATH=$PATH:/usr/local/bin
 ENV PYDIR39=/opt/python/cp39-cp39/
-ENV PATH=$PYDIR39/bin:$PATH
+RUN $PYDIR39/bin/python3 -m pip install conan
 
-RUN python3 -m pip install conan
+RUN ln -s $PYDIR39/bin/conan /usr/local/bin/conan
 RUN which conan && conan search poco
 
 # Read PYPI_PASSWORD  
