@@ -25,5 +25,5 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: build, test and deploy
       env:
-        SMOLDYN_PYPI_TOKEN: ${{ secrets.SMOLDYN_PYPI_TOKEN }}
-      run: cd ./.ci && PYPI_PASSWORD=$SMOLDYN_PYPI_TOKEN ./build_wheels_osx.sh
+        PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: cd ./.ci && PYPI_PASSWORD=$PYPI_PASSWORD ./build_wheels_osx.sh

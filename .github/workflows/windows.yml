@@ -38,8 +38,8 @@ jobs:
       shell: bash
       if : ${{ github.ref == 'master' }}
       env:
-        PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         cd build
         python -m pip install twine --upgrade
-        python -m twine upload -u __token__ -p "$PYPI_TOKEN" *.whl --skip-existing || echo "Failed to upload"
+        python -m twine upload -u __token__ -p "$PYPI_PASSWORD" *.whl --skip-existing || echo "Failed to upload"

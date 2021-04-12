@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
@@ -25,17 +25,17 @@ jobs:
         cmake --version
         PYTHON=$(which python)
         $PYTHON -c "import sys; print(sys.version)"
-        $PYTHON -m pip install setuptools wheel
+        $PYTHON -m pip install setuptools wheel twine
         $PYTHON -m pip install conan
-        mkdir build && cd build 
-        cmake -DPython3_EXECUTABLE=$PYTHON ..
     - name: make
       run: |
-          python setup.py bdist_wheel
-    - name: ctest -j2
+          python setup.py install --user
+          python -c "import krbalancing; print(krbalancing.__file__); print(krbalancing.__version__)"
+          python setup.py sdist -d .
+    - name: upload sdist
       run: |
-        # From https://github.com/processing/processing/wiki/Running-without-a-Display
-        sudo Xvfb :1 -screen 0 1024x768x24 </dev/null &
-        export DISPLAY=":1"
-        python setup.py install --user
-        python -c "import krbalancing; print(krbalancing.__file__); print(krbalancing.__version__)"
+        env:
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        python3 -m twine upload  \
+          -u __token__ -p $PYPI_PASSWORD --skip-existing \
+          krbalancing*.tar.gz \
