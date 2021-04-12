@@ -26,4 +26,6 @@ jobs:
     - name: build, test and deploy
       env:
         PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: cd .ci && PYPI_PASSWORD=$PYPI_PASSWORD ./build_wheels_osx.sh
+      run: |
+          brew install openmp || echo "Failed to install openmp"
+          cd .ci && PYPI_PASSWORD=$PYPI_PASSWORD ./build_wheels_osx.sh
