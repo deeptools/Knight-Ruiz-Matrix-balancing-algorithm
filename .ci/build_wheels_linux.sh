@@ -53,6 +53,7 @@ ls -lh $WHEELHOUSE/*.whl
 
 # If successful, upload using twine.
 if [ -n "$PYPI_PASSWORD" ]; then
+    ls $WHEELHOUSE/*.whl
     $PYTHON -m twine upload $WHEELHOUSE/krbalancing*.whl \
         --user __token__ \
         --password $PYPI_PASSWORD \

@@ -6,7 +6,7 @@ import platform
 import subprocess
 from pathlib import Path
 
-__version__ = "0.5.0.a2"
+__version__ = "0.5.0a3"
 
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
