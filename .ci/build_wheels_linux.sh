@@ -22,7 +22,7 @@ for PYDIR in $PYDIR39 $PYDIR38 $PYDIR37; do
     $PYTHON -m pip install auditwheel pytest 
     (
         cd ..
-        git clean -fxd .
+        rm -rf build || echo "Failed to delete build"
 
         $PYTHON -m pip install conan
 
@@ -34,7 +34,7 @@ for PYDIR in $PYDIR39 $PYDIR38 $PYDIR37; do
             --cmake-extra-args \
             "-DPython3_EXECUTABLE=$PYTHON -DPython3_INCLUDE_DIR=$PYINDIR -DPython3_LIBRARY=$PYLIB"
         $PYTHON setup.py bdist_wheel --skip-build -d .
-        $PYTHON -m auditwheel repair *.whl -w $WHEELHOUSE
+        $PYTHON -m auditwheel repair *.whl -w $WHEELHOUSE/
 
 	# install and test it
         $PYTHON -m pip install *.whl
@@ -43,6 +43,7 @@ for PYDIR in $PYDIR39 $PYDIR38 $PYDIR37; do
 
 	# remove the old wheel
         rm -rf *.whl 
+        ls -lh $WHEELHOUSE/*.whl
     )
 done
 
@@ -53,7 +54,6 @@ ls -lh $WHEELHOUSE/*.whl
 
 # If successful, upload using twine.
 if [ -n "$PYPI_PASSWORD" ]; then
-    ls $WHEELHOUSE/*.whl
     $PYTHON -m twine upload $WHEELHOUSE/krbalancing*.whl \
         --user __token__ \
         --password $PYPI_PASSWORD \
