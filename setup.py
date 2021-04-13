@@ -39,21 +39,21 @@ class CMakeBuild(build_ext):
                 + ", ".join(e.name for e in self.extensions)
             )
 
-        print(f"[INFO] Extra cmake args: {self.cmake_extra_args}")
         build_directory = os.path.abspath(self.build_temp)
-
-        cmake_args = [
-            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + build_directory,
-            "-DPython3_EXECUTABLE=" + sys.executable,
-        ] + self.cmake_extra_args.split()
+        print(f"[INFO] Extra cmake args: {self.cmake_extra_args}")
+        print(f"[INFO] build_directory: {build_directory}")
 
         cfg = "Debug" if self.debug else "Release"
         build_args = ["--config", cfg]
 
-        cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
+        cmake_args = [
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={build_directory}",
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={build_directory}",
+            f"-DPython3_EXECUTABLE={sys.executable}",
+        ] + self.cmake_extra_args.split()
 
-        # Assuming Makefiles
-        build_args += ["--", "-j2"]
+
+        cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
 
         self.build_args = build_args
 
@@ -85,6 +85,7 @@ class CMakeBuild(build_ext):
         build_temp = Path(self.build_temp).resolve()
         dest_path = Path(self.get_ext_fullpath(ext.name)).resolve()
         source_path = build_temp / self.get_ext_filename(ext.name)
+        assert source_path.exists(), source_path
         dest_directory = dest_path.parents[0]
         dest_directory.mkdir(parents=True, exist_ok=True)
         print(f"\n\n[INFO] moving {source_path} to {dest_path}")
