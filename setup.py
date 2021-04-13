@@ -25,7 +25,7 @@ class CMakeBuild(build_ext):
 
     def initialize_options(self):
         super().initialize_options()
-        self.cmake_extra_args = ''
+        self.cmake_extra_args = ""
 
     def finalize_options(self):
         super().finalize_options()
@@ -51,7 +51,6 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={build_directory}",
             f"-DPython3_EXECUTABLE={sys.executable}",
         ] + self.cmake_extra_args.split()
-
 
         cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
 
@@ -96,10 +95,16 @@ ext_modules = [
     CMakeExtension("krbalancing"),
 ]
 
+with open(Path(__file__).parent / "README.md") as f:
+    long_description = f.read()
+
 setup(
     name="krbalancing",
-    description="A c++ extension for python to balance a matrix using KR method",
     version=__version__,
+    description="A c++ extension for python to balance a matrix using KR method",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/deeptools/Knight-Ruiz-Matrix-balancing-algorithm",
     author="Leily Rabbani",
     author_email="leila.rabbani@gmail.com",
     maintainer="Dilawar Singh",
@@ -110,17 +115,3 @@ setup(
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
 )
-
-## setuptools.setup(
-##     name="krbalancing",
-##     description="A c++ extension for python to balance a matrix using KR method",
-##     version=__version__,
-##     author="Leily Rabbani",
-##     author_email="leila.rabbani@gmail.com",
-##     maintainer="Dilawar Singh",
-##     maintainer_email="dilawar.s.rajput@gmail.com",
-##     packages=["krbalancing"],
-##     package_dir={"krbalancing": "."},
-##     package_data={"krbalancing": ["krbalancing*.*"]},
-##     has_ext_modules=lambda: True,
-## )
