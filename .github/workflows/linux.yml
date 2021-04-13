@@ -1,0 +1,41 @@
+name: Linux Build
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: "Setup Python ${{ matrix.python-version }}"
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: install
+      run: |
+        sudo apt -y update
+        sudo apt -y install cmake
+    - name: configure
+      run: | 
+        cmake --version
+        PYTHON=$(which python)
+        $PYTHON -c "import sys; print(sys.version)"
+        $PYTHON -m pip install setuptools wheel twine
+        $PYTHON -m pip install conan
+    - name: make
+      run: |
+          python setup.py install --user
+          python -c "import krbalancing; print(krbalancing.__file__); print(krbalancing.__version__)"
+          python setup.py sdist -d .
+    - name: upload sdist
+      env:
+        PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        python3 -m twine upload  \
+          -u __token__ -p $PYPI_PASSWORD --skip-existing \
+          krbalancing*.tar.gz \

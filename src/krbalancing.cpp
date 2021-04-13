@@ -209,8 +209,10 @@ void kr_balancing::compute_normalised_matrix(bool &rescale)
   {
     A = SparseMatrixCol(A.triangularView<Eigen::Upper>());
   }
+
+// k must be signed integer else MSVS will fail to build.
 #pragma omp parallel for num_threads(num_threads) schedule(dynamic)
-  for (size_t k = 0; k < A.outerSize(); ++k)
+  for (int k = 0; k < A.outerSize(); ++k)
   {
 #pragma omp critical
     for (SparseMatrixCol::InnerIterator it(A, k); it; ++it)
@@ -230,8 +232,9 @@ void kr_balancing::rescale_norm_vector()
   assert(A.rows() == A.cols());
   A = SparseMatrixCol(A.triangularView<Eigen::Upper>());
 
+// k must be signed else MSVC will fail to build!
 #pragma omp parallel for num_threads(num_threads)
-  for (size_t k = 0; k < A.outerSize(); ++k)
+  for (int k = 0; k < A.outerSize(); ++k)
   {
 #pragma omp critical
     for (SparseMatrixCol::InnerIterator it(A, k); it; ++it)
@@ -283,6 +286,8 @@ PYBIND11_MODULE(krbalancing, m)
            py::return_value_policy::reference_internal, py::arg().noconvert())
       .def("get_normalised_matrix", &kr_balancing::get_normalised_matrix,
            py::return_value_policy::reference_internal, py::arg().noconvert());
+
+  m.attr("__version__") = CMAKE_PROJECT_VERSION;
 }
 
 //c++ -O3 -Wall -I /path/to/eigen -shared -std=c++11 -fPIC $(python3 -m pybind11 --includes) KRBalancing.cpp -o KRBalancing$(python3-config --extension-suffix)

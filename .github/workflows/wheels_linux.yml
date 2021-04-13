@@ -1,0 +1,24 @@
+name: Linux Wheels
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v**'
+  pull_request:
+    branches: 
+      - master
+      
+jobs:
+  wheel:
+    runs-on: ubuntu-latest
+    env:
+        PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Building wheel in ManuLinux container
+        run: |
+          ls -ltR
+          export PYPI_PASSWORD=$PYPI_PASSWORD
+          cd .ci && make wheels
